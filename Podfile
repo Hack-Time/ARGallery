@@ -6,6 +6,7 @@ target 'ARGallery' do
   use_frameworks!
 
   # Pods for ARGallery
+  pod 'Alamofire'
 
   target 'ARGalleryTests' do
     inherit! :search_paths
