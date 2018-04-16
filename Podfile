@@ -7,6 +7,8 @@ target 'ARGallery' do
 
   # Pods for ARGallery
   pod 'Alamofire'
+  pod 'Kingfisher'
+  pod 'PKHUD'
 
   target 'ARGalleryTests' do
     inherit! :search_paths

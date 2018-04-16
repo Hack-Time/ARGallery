@@ -9,6 +9,7 @@
 import UIKit
 import SceneKit
 import ARKit
+import Kingfisher
 
 class ViewController: UIViewController, ARSCNViewDelegate {
 
@@ -16,12 +17,22 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     
     let nodeName = "verticalPlane"
     
+    /// Prevents restarting the session while a restart is in progress.
+    var isRestartAvailable = true
+    
     var currentAnchor: ARPlaneAnchor?
+    
+    var image: UIImage?
     
     // 平面
     var planes = Set<SCNNode>()
     // 绘画
     var paintings = [Painting]()
+    
+    /// The view controller that displays the status and "restart experience" UI.
+    lazy var statusViewController: StatusViewController = {
+        return childViewControllers.lazy.flatMap({ $0 as? StatusViewController }).first!
+    }()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -43,18 +54,29 @@ class ViewController: UIViewController, ARSCNViewDelegate {
             ARSCNDebugOptions.showFeaturePoints,
 //            ARSCNDebugOptions.showWorldOrigin
         ]
+        
+        navigationController?.navigationBar.prefersLargeTitles = false
+        
+        // Hook up status view controller callback(s).
+        statusViewController.restartExperienceHandler = { [unowned self] in
+            self.restartExperience()
+        }
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
-        // Create a session configuration
-        let configuration = ARWorldTrackingConfiguration()
+//        // Prevent the screen from being dimmed to avoid interuppting the AR experience.
+//        UIApplication.shared.isIdleTimerDisabled = true
         
-        configuration.planeDetection = [.vertical]
-
-        // Run the view's session
-        sceneView.session.run(configuration)
+        resetTracking()
+//        // Create a session configuration
+//        let configuration = ARWorldTrackingConfiguration()
+//
+//        configuration.planeDetection = [.vertical]
+//
+//        // Run the view's session
+//        sceneView.session.run(configuration)
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -76,42 +98,14 @@ class ViewController: UIViewController, ARSCNViewDelegate {
             let position = SCNVector3(column.x,
                                       column.y,
                                       column.z)
-            let painting = Painting(position, currentAnchor)
-            
+            let painting = Painting(image!, position, currentAnchor)
             paintings.append(painting)
             sceneView.scene.rootNode.addChildNode(painting)
+        } else {
+            let alert = UIAlertController(title: "Sorry", message: "Plane hasn't found.", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .destructive, handler: nil))
+            present(alert, animated: true)
         }
-        
-        
-//
-//        let hitTestResults = sceneView.hitTest(point,
-//                                               types: .featurePoint)
-//        if let result = hitTestResults.first {
-//            let column = result.worldTransform.columns.3
-//            let position = SCNVector3(column.x,
-//                                      column.y,
-//                                      column.z)
-//
-//             let ARAnchorNode = SCNNode()
-//             let planeNode = SCNNode()
-//
-//             // converting the ARAnchor to an ARPlaneAnchor to get access to ARPlaneAnchor's extent and center values
-////             let anchor = anchor as? ARPlaneAnchor
-//             // creating plane geometry
-////             planeNode.geometry = SCNPlane(width: CGFloat((anchor?.extent.x)!), height: CGFloat((anchor?.extent.z)!))
-//             // transforming node
-//             planeNode.position = position // SCNVector3((anchor?.center.x)!, 0, (anchor?.center.z)!)
-//             planeNode.geometry?.firstMaterial?.diffuse.contents = UIImage(named: "example.jpg")
-//             planeNode.eulerAngles = SCNVector3(-Float.pi/2,0,0)
-//             
-//             // adding plane node as child to ARAnchorNode due to mandatory ARKit conventions
-//             ARAnchorNode.addChildNode(planeNode)
-//             //returning ARAnchorNode (must return a node from this function to add it to the scene)
-//             nodes.append(planeNode)
-            
-//            let textNode = addTextNode("Test0Test0Test0Test0Test0Test0Test0Test0", at: position)
-//            sceneView.scene.rootNode.addChildNode(textNode)
-//        }
     }
 }
 
@@ -140,17 +134,6 @@ extension ViewController {
         node.addChildNode(planeNode)
     }
     
-//    // Override to create and configure nodes for anchors added to the view's session.
-//    func renderer(_ renderer: SCNSceneRenderer,
-//                  nodeFor anchor: ARAnchor) -> SCNNode? {
-//        print(#function)
-//        let node = SCNNode()
-//
-//
-//
-//        return node
-//    }
-    
     func renderer(_ renderer: SCNSceneRenderer,
                   didRemove node: SCNNode,
                   for anchor: ARAnchor) {
@@ -158,26 +141,6 @@ extension ViewController {
         currentAnchor = nil
         removeVerticalPlaneFrom(node)
         planes.remove(node)
-    }
-    
-    
-    
-    
-    
-    
-    func session(_ session: ARSession, didFailWithError error: Error) {
-        // Present an error message to the user
-        
-    }
-    
-    func sessionWasInterrupted(_ session: ARSession) {
-        // Inform the user that the session has been interrupted, for example, by presenting an overlay
-        
-    }
-    
-    func sessionInterruptionEnded(_ session: ARSession) {
-        // Reset tracking and/or remove existing anchors if consistent tracking is required
-        
     }
 }
 
@@ -190,13 +153,48 @@ extension ViewController {
                 planeNode.geometry?.firstMaterial?.diffuse.contents = UIColor.clear
         planeNode.geometry?.firstMaterial?.isDoubleSided = true
         planeNode.position = SCNVector3Make(anchor.center.x, anchor.center.y, anchor.center.z)
-        planeNode.eulerAngles = SCNVector3Make(Float(90.degreesToRad()), 0, 0)
+//        planeNode.eulerAngles = SCNVector3Make(Float(90.degreesToRad()), 0, 0)
         return planeNode
     }
     
     func removeVerticalPlaneFrom(_ node: SCNNode) {
         if let existingNode = node.childNode(withName: nodeName, recursively: false) {
             existingNode.removeFromParentNode()
+        }
+    }
+}
+
+extension ViewController {
+    /// Creates a new AR configuration to run on the `session`.
+    /// - Tag: ARReferenceImage-Loading
+    func resetTracking() {
+        
+//        guard let referenceImages = ARReferenceImage.referenceImages(inGroupNamed: "AR Resources", bundle: nil) else {
+//            fatalError("Missing expected asset catalog resources.")
+//        }
+        
+        let configuration = ARWorldTrackingConfiguration()
+//        configuration.detectionImages = referenceImages
+//        session.run(configuration, options: [.resetTracking, .removeExistingAnchors])
+        configuration.planeDetection = [.vertical]
+        sceneView.session.run(configuration)
+        
+        statusViewController.scheduleMessage("Look around to detect images", inSeconds: 7.5, messageType: .contentPlacement)
+    }
+    
+    // MARK: - Interface Actions
+    
+    func restartExperience() {
+        guard isRestartAvailable else { return }
+        isRestartAvailable = false
+        
+        statusViewController.cancelAllScheduledMessages()
+        
+        resetTracking()
+        
+        // Disable restart for a while in order to give the session time to restart.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
+            self.isRestartAvailable = true
         }
     }
 }
