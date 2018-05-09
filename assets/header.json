@@ -1,0 +1,49 @@
+{
+  "autoplayTransitionDelay" : 5,
+  "author" : "",
+  "timestamp" : "2018-45-17 21:4:4",
+  "loopSlideshow" : 0,
+  "filename" : "【new】画家项目阐述",
+  "autoplayBuildDelay" : 2,
+  "comment" : "",
+  "title" : "【new】画家项目阐述",
+  "showMode" : 0,
+  "creator" : "Apple Keynote 8.0",
+  "slideList" : [
+    "15820BF0-F7D3-42C6-9ADD-B9504DA45319",
+    "B4D013B2-55AD-4D1B-BB80-280589A0DFE8",
+    "8FB96E5A-6693-4B0D-9633-7133BEE9A079",
+    "A58441EC-03AB-4D58-BC4D-6C2334A283C1",
+    "97D04995-655A-4882-B247-C26496875324",
+    "527B93C5-FC76-48F5-BDE7-D9446319E62E",
+    "E79E80CC-2E30-47BC-974A-375AC4793DCB",
+    "12416255-EF61-4980-82A8-A1E3209F6571",
+    "62FB11E5-DC35-4CF9-AB97-A74DAE625B3F",
+    "BBE0B25D-44F8-4DE7-BC17-FE870255BB6F",
+    "A76628F6-820A-4CBE-8A80-2D4A79836626",
+    "EC0B0E05-9759-4B95-AF65-7D0699567CAF",
+    "B70FF6C9-24D6-46EF-B451-1DBC52EE7F71",
+    "6536CC62-D24C-4157-BC3C-FDB0B2BD3996",
+    "F44755DF-E636-4B4D-9B73-45C03B84EDC6",
+    "99E66970-9810-497C-99B8-AD5ED539165B",
+    "02C4B59B-B0F5-4DCD-A625-940B37070914",
+    "82EF9917-BF75-4B9C-BDE9-D33A8966623A"
+  ],
+  "soundtrack" : {
+    "mode" : 0,
+    "volume" : 1
+  },
+  "slideWidth" : 960,
+  "slideHeight" : 540,
+  "slideCount" : 18,
+  "majorVersion" : 1,
+  "minorVersion" : 2,
+  "fonts" : [
+    "ArialMT",
+    "Arial-BoldMT",
+    "TrebuchetMS",
+    "Helvetica-Bold",
+    "HelveticaNeue",
+    "Helvetica"
+  ]
+}
